@@ -55,7 +55,7 @@ export function ForLocation() {
           <p className="w-[300px] text-center text-[18px] font-['poppins']">
             Your current location is - {mylocation}
           </p>
-          {errorMsg && <p className="text-red-500">{errorMsg}</p>}
+          
           <button
             className="h-[70px] w-[80%] bg-green-500 rounded-[20px]"
             onClick={mylatlng}
