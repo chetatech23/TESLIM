@@ -14,7 +14,7 @@ export default async function handler(req, res) {
   }
 
   const prompt = `Tell me about this location: ${address}.
-Include: recent good news, recent bad news, the nearest police station, and the nearest hospital.`;
+Include: general safety information, notable recent events you know of (good and bad), the nearest police station, and the nearest hospital.`;
 
   try {
     const response = await fetch(
@@ -24,7 +24,6 @@ Include: recent good news, recent bad news, the nearest police station, and the 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           contents: [{ parts: [{ text: prompt }] }],
-          tools: [{ google_search: {} }], // lets it look up recent news
         }),
       }
     );
@@ -46,5 +45,3 @@ Include: recent good news, recent bad news, the nearest police station, and the 
     return res.status(500).json({ error: 'Failed to connect to Gemini.' });
   }
 }
-   
-  
