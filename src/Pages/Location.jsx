@@ -1,48 +1,83 @@
-  export default async function handler(req, res) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
+ import { useState, useEffect } from "react";
+import axios from "axios";
+import { Link } from "react-router";
 
-  const { address } = req.body;
-  if (!address) {
-    return res.status(400).json({ error: 'Address is required' });
-  }
+export function ForLocation() {
+  const [mylocation, setMyLocation] = useState('');
+  const [errorMsg, setErrorMsg] = useState('');
+  const [geminiresponse, setGeminiResponse] = useState('');
 
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) {
-    return res.status(500).json({ error: 'API key is missing on the server' });
-  }
+  useEffect(() => {
+    if (!mylocation) return;
 
-  const prompt = ` just provide a fast summary for this location: ${address}.  tell me there crime news the good part nearby police station near by hospital now remember write about it but make it short but not that short`;
+    setGeminiResponse('Loading...');
 
-  try {
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-        }),
-      }
+    axios
+      .post('/api/safety', { address: mylocation })
+      .then((response) => {
+        setGeminiResponse(response.data.result);
+      })
+      .catch((err) => {
+        console.error(err);
+        setGeminiResponse(err.response?.data?.error || err.message);
+      });
+  }, [mylocation]);
+
+  function mylatlng() {
+    setErrorMsg('Locating...');
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const mylat = position.coords.latitude;
+        const mylng = position.coords.longitude;
+
+        fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${mylat}&lon=${mylng}`)
+          .then((response) => response.json())
+          .then((data) => {
+            setMyLocation(data.display_name);
+            setErrorMsg('');
+          })
+          .catch(() => {
+            setErrorMsg('Could not fetch address name.');
+          });
+      },
+      (error) => {
+        setErrorMsg(`Error: ${error.message}`);
+      },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
     );
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      console.error('Gemini API error:', data);
-      return res.status(500).json({ error: data.error?.message || 'Gemini request failed' });
-    }
-
-    const aiText =
-      data.candidates?.[0]?.content?.parts?.map((p) => p.text).join('') ||
-      'No details available for this location.';
-
-    return res.status(200).json({ result: aiText });
-  } catch (error) {
-    console.error('Gemini Error:', error);
-    return res.status(500).json({ error: 'Failed to connect to Gemini.' });
   }
-}
 
+  return (
+    <>
+      <div className="flex items-center justify-center h-[600px]">
+        <div className="bg-white h-[400px] flex flex-col justify-center w-[95%] items-center gap-[20px] rounded-[20px]">
+          <p className="w-[300px] text-center text-[18px] font-['poppins']">
+            Your current location is - {mylocation}
+          </p>
+          
+          <button
+            className="h-[70px] w-[80%] bg-green-500 rounded-[20px]"
+            onClick={mylatlng}
+          >
+            CHECK LOCATION
+          </button>
+        </div>
+      </div>
+
+     <div className="    flex  items-center justify-center mb-[30px]">
+      <div className="mt-[10px] whitespace-pre-wrap w-[80%] bg-white flex  items-center justify-center rounded-[10px]">
+        <p className="font-['poppins'] text-center w-[80%] mt-[10px] mt-[10px]">{`ABOUT LOCATION - ${geminiresponse}`}</p>
+      </div>
+     </div>
+
+
+      <Link to="/">
+        <div className="flex items-center justify-center">
+          <p className="text-[20px] w-[60%] border-b text-center">Go Back</p>
+        </div>
+      </Link>
+    </>
+  );
+}
   
