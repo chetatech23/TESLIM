@@ -65,9 +65,12 @@ export function ForLocation() {
         </div>
       </div>
 
-      <div className="mt-[10px] whitespace-pre-wrap">
-        <p>{`ABOUT LOCATION - ${geminiresponse}`}</p>
+     <div className="    flex  items-center justify-center mb-[30px]">
+      <div className="mt-[10px] whitespace-pre-wrap w-[80%] bg-white flex  items-center justify-center rounded-[10px]">
+        <p className="font-['poppins'] text-center w-[60%]">{`ABOUT LOCATION - ${geminiresponse}`}</p>
       </div>
+     </div>
+
 
       <Link to="/">
         <div className="flex items-center justify-center">
