@@ -25,16 +25,22 @@ export default async function handlerequest(req, res) {
       contents: [{ parts: [{ text: prompt }] }]
     })
   })
-    .then((response) => response.json())
-    .then((data) => {
+    .then(async (response) => {
+      const data = await response.json();
+
+      // If Google returns an error, send it back so you can see it on your screen!
+      if (!response.ok) {
+        console.error("Google API Error:", data);
+        return res.status(500).json({ error: data.error?.message || "Google API rejected the request." });
+      }
+
       const aiText = data.candidates?.[0]?.content?.parts?.[0]?.text || "No details available for this location.";
       return res.status(200).json({ result: aiText });
     })
     .catch((error) => {
-      console.error("Gemini Error:", error);
+      console.error("Server Error:", error);
       return res.status(500).json({ error: "Failed to connect to Gemini." });
     });
-
 }
 
 
