@@ -13,12 +13,11 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'API key is missing on the server' });
   }
 
-  const prompt = `Tell me about this location: ${address}.
-Include: general safety information, notable recent events you know of (good and bad), the nearest police station, and the nearest hospital.`;
+  const prompt = ` just provide a fast summary for this location: ${address}.  tell me there crime news the good part nearby police station near by hospital now remember write about it but make it short but not that short`;
 
   try {
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -45,3 +44,5 @@ Include: general safety information, notable recent events you know of (good and
     return res.status(500).json({ error: 'Failed to connect to Gemini.' });
   }
 }
+
+  
