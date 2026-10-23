@@ -1,43 +1,50 @@
-    export default async function handlerequest (req,res) {
+export default async function handler(req, res) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
 
-    if(req.method !== 'POST') {
-      return res.status(405).json({ error: 'Method not allowed' });
+  const { address } = req.body;
+  if (!address) {
+    return res.status(400).json({ error: 'Address is required' });
+  }
+
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    return res.status(500).json({ error: 'API key is missing on the server' });
+  }
+
+  const prompt = `Tell me about this location: ${address}.
+Include: recent good news, recent bad news, the nearest police station, and the nearest hospital.`;
+
+  try {
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          tools: [{ google_search: {} }], // lets it look up recent news
+        }),
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      console.error('Gemini API error:', data);
+      return res.status(500).json({ error: data.error?.message || 'Gemini request failed' });
     }
 
-     const { address } = req.body;
+    const aiText =
+      data.candidates?.[0]?.content?.parts?.map((p) => p.text).join('') ||
+      'No details available for this location.';
 
-     if(!address) {
-      return res.status(400).json({ error: 'Address is required' })
-     }
-    
-     const apiKey = process.env.GEMINI_API_KEY;
-
-     if(!apiKey) {
-      return res.status(500).json({ error: 'API key is missing on the server' });
-     }  
-
-     const prompt = `write me about this location : ${address} tell me update about the location the good news recently the bad news recently the king nearby police station near by hospital `
-
-     return  fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,{
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      contents: [{ parts: [{ text: prompt }] }]
-    })
-  }).then((response) => { return response.json().then((data) => {
-         const aiText = data.candidates?.[0]?.content?.parts?.[0]?.text || "No details available for this location.";
-         
-         return res.status(200).json({ result: aiText });
-     }).catch((error) => {
-    console.error("Gemini Error:", error);
-    return res.status(500).json({ error: "Failed to connect to Gemini." });
-  });
-
-     })
-
-
-   }
-
-
+    return res.status(200).json({ result: aiText });
+  } catch (error) {
+    console.error('Gemini Error:', error);
+    return res.status(500).json({ error: 'Failed to connect to Gemini.' });
+  }
+}
    
   
